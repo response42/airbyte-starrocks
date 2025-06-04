@@ -31,6 +31,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,12 +74,12 @@ public class DefaultStreamLoader implements StreamLoader {
                 database,
                 loadTable);
 
-        this.clientBuilder  = HttpClients.custom()
-                .setRedirectStrategy(new DefaultRedirectStrategy() {
-                    @Override
-                    protected boolean isRedirectable(String method) {
-                        return true;
-                    }
+        this.clientBuilder = HttpClientBuilder
+                .create()
+                .setRedirectStrategy(new LaxRedirectStrategy() {
+                        protected boolean isRedirectable(String method) {
+                            return "PUT".equalsIgnoreCase(method) || super.isRedirectable(method);
+                        }
                 });
     }
 
@@ -116,11 +117,16 @@ public class DefaultStreamLoader implements StreamLoader {
 
         String responseBody = null;
 
-        try (CloseableHttpClient client = HttpClients.createDefault();) {
+        try (CloseableHttpClient client = clientBuilder.build()) {
+
             long startNanoTime = System.nanoTime();
             try (CloseableHttpResponse response = client.execute(httpPut)) {
+                LOG.info("Stream loading response is : {}", response);
+
                 HttpEntity responseEntity = response.getEntity();
                 responseBody = EntityUtils.toString(responseEntity);
+
+                LOG.info("Stream loading responseBody is : {}", responseBody);
             }
             StreamLoadResponse streamLoadResponse = new StreamLoadResponse();
             StreamLoadResponse.StreamLoadResponseBody streamLoadBody
@@ -199,7 +205,7 @@ public class DefaultStreamLoader implements StreamLoader {
         int idx = 0;
         for (;;) {
             TimeUnit.SECONDS.sleep(Math.min(++idx, 5));
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
+            try (CloseableHttpClient client = clientBuilder.build()) {
                 String url = host + "/api/" + database + "/get_load_state?label=" + label;
                 HttpGet httpGet = new HttpGet(url);
                 httpGet.addHeader("Authorization",
@@ -246,7 +252,7 @@ public class DefaultStreamLoader implements StreamLoader {
             return null;
         }
 
-        try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+        try (CloseableHttpClient httpclient = clientBuilder.build()) {
             HttpGet httpGet = new HttpGet(errorUrl);
             try (CloseableHttpResponse resp = httpclient.execute(httpGet)) {
                 int code = resp.getStatusLine().getStatusCode();

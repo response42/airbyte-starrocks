@@ -14,5 +14,5 @@ ENV APPLICATION destination-starrocks
 
 COPY --from=build /airbyte /airbyte
 
-LABEL io.airbyte.version=0.1.0
-LABEL io.airbyte.name=airbyte/destination-starrocks
+LABEL io.airbyte.version=0.1.1
+LABEL io.airbyte.name=milanmosny/destination-starrocks
