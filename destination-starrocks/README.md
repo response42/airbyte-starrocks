@@ -5,8 +5,10 @@ For information about how to use this connector within Airbyte, see [the User Do
 
 ## Local development
 
+#### Install jdk 17
+
 #### Building via Gradle
-From the Airbyte repository root, run:
+From the Airbyte repository root, tag v0.44.4, run:
 ```
 ./gradlew :airbyte-integrations:connectors:destination-starrocks:build
 ```

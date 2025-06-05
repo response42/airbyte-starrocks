@@ -16,6 +16,9 @@ package io.airbyte.integrations.destination.starrocks;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.airbyte.integrations.base.JavaBaseConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,7 +26,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class SqlUtil {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultStreamLoader.class);
+
     public static Connection createJDBCConnection(JsonNode config) throws ClassNotFoundException, SQLException {
+        
+        LOG.info("Creating a connection using pattern: {}",
+                StarRocksConstants.PATTERN_JDBC_URL);
+
         String dbUrl = String.format(StarRocksConstants.PATTERN_JDBC_URL,
                 config.get(StarRocksConstants.KEY_FE_HOST).asText(),
                 config.get(StarRocksConstants.KEY_FE_QUERY_PORT).asInt(StarRocksConstants.DEFAULT_FE_QUERY_PORT),
